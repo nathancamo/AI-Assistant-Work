@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Work Assistant</title>
+    <!-- Tesseract.js for OCR -->
+    <script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,500;8..144,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="theme-toggle">
+        <button id="toggleThemeBtn" class="action-button" aria-label="Toggle dark mode">
+            <span class="material-symbols-outlined">light_mode</span>
+            <span class="emoji-fallback">🌞</span>
+            <span>Light/Dark</span>
+        </button>
+    </div>
+    <div class="container">
+        <h1>
+            <span class="material-symbols-outlined" aria-label="Waving Hand">waving_hand</span>
+            <span class="emoji-fallback" style="font-size:2rem;" aria-label="Waving Hand">👋</span>
+            Howdy, Nathan.
+        </h1>
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'generatorTab')">
+                <span class="material-symbols-outlined" aria-label="Auto Awesome">auto_awesome</span>
+                <span class="emoji-fallback" aria-label="Sparkles">✨</span>
+                Generator
+            </button>
+            <button class="tab-button" onclick="openTab(event, 'assistantTab')">
+                <span class="material-symbols-outlined" aria-label="Assistant">support_agent</span>
+                <span class="emoji-fallback" aria-label="Robot">🤖</span>
+                Assistant Tools
+            </button>
+            <button class="tab-button" onclick="openTab(event, 'historyTab')">
+                <span class="material-symbols-outlined" aria-label="History">history</span>
+                <span class="emoji-fallback" aria-label="History">🕓</span>
+                History
+            </button>
+            <button class="tab-button" onclick="openTab(event, 'knowledgeTab')">
+                <span class="material-symbols-outlined" aria-label="Library Books">library_books</span>
+                <span class="emoji-fallback" aria-label="Book">📚</span>
+                Knowledge Base
+            </button>
+            <button class="tab-button" onclick="openTab(event, 'analyticsTab')">
+                <span class="material-symbols-outlined" aria-label="Analytics">query_stats</span>
+                <span class="emoji-fallback" aria-label="Chart">📊</span>
+                Analytics
+            </button>
+        </div>
+
+        <!-- Generator Tab -->
+        <div id="generatorTab" class="tab-content active">
+            <div id="dropZone">
+                <p>
+                    <span class="material-symbols-outlined" aria-label="Image">image</span>
+                    <span class="emoji-fallback" aria-label="Camera">📷</span>
+                    Paste query text below, or drag & drop a screenshot here.
+                </p>
+                <textarea id="textInput" class="input-field" placeholder="Paste student's query text here..."></textarea>
+                <label for="imageInput" class="upload-label">
+                    <span class="material-symbols-outlined" aria-label="Upload File">upload_file</span>
+                    <span class="emoji-fallback" aria-label="Upload">📤</span>
+                    Or Click to Upload
+                </label>
+                <input type="file" id="imageInput" accept="image/*">
+                <div id="fileName">No file selected</div>
+            </div>
+            <div class="button-group">
+                <select id="toneControl" class="select-field" style="width: auto; padding: 10px 16px;">
+                    <option value="auto">Auto-detect Tone</option>
+                    <option value="empathetic">Empathetic</option>
+                    <option value="formal">Formal</option>
+                    <option value="concise">Concise</option>
+                </select>
+                <label>
+                    <input type="checkbox" id="useKBCheckbox">
+                    Use Knowledge Base
+                </label>
+                <button id="processButton" class="action-button">
+                    <span class="material-symbols-outlined" aria-label="Auto Awesome">auto_awesome</span>
+                    <span class="emoji-fallback" aria-label="Sparkles">✨</span>
+                    Generate Smart Response
+                </button>
+                <button id="detailedButton" class="action-button">
+                    <span class="material-symbols-outlined" aria-label="Travel Explore">travel_explore</span>
+                    <span class="emoji-fallback" aria-label="Magnifying Glass">🔎</span>
+                    Generate Detailed Answer
+                </button>
+            </div>
+            <div id="progress"></div>
+            <div id="analysis-result"></div>
+            <div class="output-area">
+                <h3>
+                    <span class="material-symbols-outlined" aria-label="Chat">chat</span>
+                    <span class="emoji-fallback" aria-label="Speech Balloon">💬</span>
+                    Generated Response
+                </h3>
+                <textarea id="responseOutput" class="output-field" placeholder="Your AI-generated response will appear here..." readonly></textarea>
+                <div class="button-group">
+                    <button id="copyButton" class="action-button copy-button">
+                        <span class="material-symbols-outlined" aria-label="Copy">content_copy</span>
+                        <span class="emoji-fallback" aria-label="Copy">📋</span>
+                        Copy
+                    </button>
+                    <button id="downloadButton" class="action-button">
+                        <span class="material-symbols-outlined" aria-label="Download">download</span>
+                        <span class="emoji-fallback" aria-label="Download">⬇️</span>
+                        Download
+                    </button>
+                </div>
+            </div>
+            <div id="postGenerationSection" class="post-generation-section">
+                <h3>
+                    <span class="material-symbols-outlined" aria-label="Feedback">feedback</span>
+                    <span class="emoji-fallback" aria-label="Feedback">📝</span>
+                    Next Steps & Feedback
+                </h3>
+                <div class="button-group" id="nextStepsButtons"></div>
+                <textarea id="feedbackText" class="input-field" placeholder="e.g., 'Make it more concise' or 'This was perfect!'"></textarea>
+                <button id="submitFeedbackButton" class="action-button feedback-button">
+                     <span class="material-symbols-outlined" aria-label="Feedback">feedback</span>
+                     <span class="emoji-fallback" aria-label="Thumbs Up">👍</span>
+                     Submit Feedback
+                </button>
+            </div>
+        </div>
+        
+        <!-- Assistant Tools Tab -->
+        <div id="assistantTab" class="tab-content">
+            <div class="tool-grid">
+                <div class="tool-card">
+                    <h3>
+                        <span class="material-symbols-outlined" aria-label="Person">person</span>
+                        <span class="emoji-fallback" aria-label="Student">🧑‍🎓</span>
+                        Student Snapshot
+                    </h3>
+                    <p>Enter a course code (e.g., HBNB) to get a proactive summary of potential issues.</p>
+                    <textarea id="studentIdInput" class="input-field" placeholder="Enter course code..."></textarea>
+                    <button id="snapshotButton" class="action-button">Generate Snapshot</button>
+                    <div id="snapshotResult"></div>
+                </div>
+                <div class="tool-card">
+                    <h3>
+                        <span class="material-symbols-outlined" aria-label="Link">link</span>
+                        <span class="emoji-fallback" aria-label="Chain">🔗</span>
+                        Prerequisite Chain Checker
+                    </h3>
+                    <p>Enter a list of completed units (comma-separated, e.g., HBM1001, HNB1001) to see what's next.</p>
+                    <textarea id="prereqInput" class="input-field" placeholder="Enter completed units..."></textarea>
+                    <button id="prereqButton" class="action-button">Check Eligibility</button>
+                    <div id="prereqResult"></div>
+                </div>
+                <div class="tool-card">
+                    <h3>
+                        <span class="material-symbols-outlined" aria-label="Summarize">summarize</span>
+                        <span class="emoji-fallback" aria-label="Memo">📝</span>
+                        Complex Case Summarizer
+                    </h3>
+                    <p>Paste a long email chain or complex query to get a concise summary.</p>
+                    <textarea id="caseInput" class="input-field" placeholder="Paste email thread here..."></textarea>
+                    <button id="caseButton" class="action-button">Summarize Case</button>
+                    <div id="caseResult"></div>
+                </div>
+                <div class="tool-card">
+                    <h3>
+                        <span class="material-symbols-outlined" aria-label="Question Mark">help</span>
+                        <span class="emoji-fallback" aria-label="Thinking">🤔</span>
+                        "What-If" Scenario Planner
+                    </h3>
+                    <p>Enter a hypothetical situation to see a recovery plan.</p>
+                    <textarea id="scenarioInput" class="input-field" placeholder="e.g., A student in HBPD fails HFB1112..."></textarea>
+                    <button id="scenarioButton" class="action-button">Plan Scenario</button>
+                    <div id="scenarioResult"></div>
+                </div>
+                 <div class="tool-card">
+                    <h3>
+                        <span class="material-symbols-outlined" aria-label="Work">work</span>
+                        <span class="emoji-fallback" aria-label="Briefcase">💼</span>
+                        Career Pathway Mapper
+                    </h3>
+                    <p>Enter a course name to research career options.</p>
+                    <textarea id="careerInput" class="input-field" placeholder="e.g., Bachelor of Biomedical Science"></textarea>
+                    <button id="careerButton" class="action-button">Map Careers</button>
+                    <div id="careerResult"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversation History Tab -->
+        <div id="historyTab" class="tab-content">
+            <h3>
+                <span class="material-symbols-outlined" aria-label="History">history</span>
+                <span class="emoji-fallback" aria-label="History">🕓</span>
+                Conversation History
+            </h3>
+            <div id="historyContent">No history yet.</div>
+        </div>
+
+        <!-- Knowledge Base Tab -->
+        <div id="knowledgeTab" class="tab-content">
+            <h3>
+                <span class="material-symbols-outlined" aria-label="Library Books">library_books</span>
+                <span class="emoji-fallback" aria-label="Book">📚</span>
+                Live Knowledge Base
+            </h3>
+            <p>Edit the course information below. Changes are saved automatically and will be used by the AI (if enabled).</p>
+            <textarea id="knowledgeBase" class="input-field"></textarea>
+            <div id="kbSaveStatus"></div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analyticsTab" class="tab-content">
+            <h3>
+                <span class="material-symbols-outlined" aria-label="Query Stats">query_stats</span>
+                <span class="emoji-fallback" aria-label="Chart">📊</span>
+                Query Analytics
+            </h3>
+            <div id="analyticsContent">Analytics will be displayed here.</div>
+            <button id="predictiveButton" class="action-button">
+                <span class="material-symbols-outlined" aria-label="Insight">insights</span>
+                <span class="emoji-fallback" aria-label="Crystal Ball">🔮</span>
+                Get Predictive Insights
+            </button>
+            <button id="reportButton" class="action-button">
+                <span class="material-symbols-outlined" aria-label="Report">report</span>
+                <span class="emoji-fallback" aria-label="Newspaper">📰</span>
+                Generate Weekly Report
+            </button>
+            <button id="feedbackInsightsButton" class="action-button">
+                <span class="material-symbols-outlined" aria-label="Thumb Up">thumb_up</span>
+                <span class="emoji-fallback" aria-label="Thumbs Up">👍</span>
+                View Feedback Insights
+            </button>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div id="appModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">
+                <span class="material-symbols-outlined" aria-label="Info">info</span>
+                <span class="emoji-fallback" aria-label="Info">ℹ️</span>
+                Modal
+            </h3>
+            <div id="modalContent"></div>
+            <button class="action-button" onclick="document.getElementById('appModal').style.display='none'">
+                <span class="material-symbols-outlined" aria-label="Close">close</span>
+                <span class="emoji-fallback" aria-label="Cross Mark">❌</span>
+                Close
+            </button>
+        </div>
+    </div>
+
+    <div id="messageBox" class="message-box"></div>
+    <script src="script.js"></script>
+</body>
+</html>
