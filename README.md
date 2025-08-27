@@ -1,414 +1,67 @@
 # AI-Assistant-Work
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Work Assistant</title>
-    <!-- Tesseract.js for OCR -->
-    <script src='https://unpkg.com/tesseract.js@5/dist/tesseract.min.js'></script>
-    <!-- Google Fonts for Material 3 Design -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,500;8..144,600&display=swap" rel="stylesheet">
-    <!-- Google Material Symbols -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <style>
-        :root {
-            /* Custom Theme Color Palette */
-            --app-theme-color: #9DDBF1;
-            --app-theme-on-color: #001F2A; /* Dark text for contrast on light blue */
-            --md-sys-color-primary: #006580;
-            --md-sys-color-on-primary: #ffffff;
-            --md-sys-color-secondary: #006A60;
-            --md-sys-color-background: #F8FCFF;
-            --md-sys-color-surface: #F8FCFF;
-            --md-sys-color-surface-variant: #DAE4E8;
-            --md-sys-color-on-surface: #191C1E;
-            --md-sys-color-on-surface-variant: #41484D;
-            --md-sys-color-outline: #71787E;
-            --md-sys-color-shadow: #000000;
-        }
 
-        body {
-            font-family: 'Roboto Flex', sans-serif;
-            background-color: #eaf6ff;
-            background-image: radial-gradient(at 20% 20%, hsla(204,70%,85%,1) 0px, transparent 50%),
-                              radial-gradient(at 80% 10%, hsla(190,70%,80%,1) 0px, transparent 50%),
-                              radial-gradient(at 80% 80%, hsla(210,70%,90%,1) 0px, transparent 50%);
-            color: var(--md-sys-color-on-surface);
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* Changed to allow scrolling */
-            min-height: 100dvh; /* Changed to dynamic viewport height */
-            margin: 0;
-            padding: 16px;
-            box-sizing: border-box;
-        }
-        
-        .container {
-            background-color: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px) saturate(150%);
-            -webkit-backdrop-filter: blur(12px) saturate(150%);
-            padding: 24px;
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
-            width: 100%;
-            max-width: 800px;
-            text-align: center;
-            box-sizing: border-box;
-            z-index: 1;
-            margin: 20px 0; /* Added margin for spacing */
-        }
+A web-based AI assistant tool for student queries, analytics, and workflow support.  
+Now features **secure Gemini API integration**, advanced features, and improved emoji icon support!
 
-        h1 {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
+---
+## Features
 
-        h1, h3 {
-            color: var(--md-sys-color-primary);
-            font-weight: 600;
-        }
-        h1 { margin-top: 0; margin-bottom: 24px; font-size: 2rem; }
-        h3 { margin-bottom: 8px; }
+- **Smart Response Generator:** Paste or OCR student queries, get Gemini-powered answers.
+- **Assistant Tools:** Case summaries, scenario planning, career mapping, chain checker, and more, all AI powered.
+- **Conversation History:** Browse previous queries and AI responses.
+- **Downloadable responses:** Save generated responses as .txt files.
+- **Feedback tracking:** User feedback saved and used for analytics.
+- **Live Knowledge Base:** Edit course info; can be injected into AI answers for extra accuracy.
+- **Analytics:** Predictive insights, weekly reports, feedback analysis.
+- **Dark mode:** User switch between light/dark UI.
+- **Responsive/mobile design.**
+- **Backend proxy:** API key never exposed to users.
+- **Emoji/Material icons:** Maximum compatibility.
 
-        /* Tab Navigation */
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid var(--md-sys-color-outline);
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-        .tab-button {
-            padding: 10px 16px;
-            cursor: pointer;
-            border: none;
-            background-color: transparent;
-            font-size: 1rem;
-            font-weight: 500;
-            color: var(--md-sys-color-on-surface-variant);
-            border-bottom: 3px solid transparent;
-            transition: color 0.3s, border-bottom-color 0.3s;
-        }
-        .tab-button.active, .tab-button:hover {
-            color: var(--md-sys-color-primary);
-            border-bottom: 3px solid var(--md-sys-color-primary);
-            font-weight: 600;
-        }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.5s; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+---
 
-        #imageInput { display: none; }
-        
-        #dropZone {
-            border: 2px dashed var(--md-sys-color-outline);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-            transition: border-color 0.3s, background-color 0.3s;
-        }
-        #dropZone.dragover {
-            border-color: var(--md-sys-color-primary);
-            background-color: var(--app-theme-color);
-        }
-        #dropZone p { margin: 0 0 16px 0; color: var(--md-sys-color-on-surface-variant); font-weight: 500; }
-        
-        .input-field, .output-field, .select-field {
-            background-color: var(--md-sys-color-surface-variant);
-            border-radius: 8px; border: 1px solid transparent;
-            padding: 16px; width: 100%; box-sizing: border-box;
-            font-size: 1rem; transition: all 0.3s;
-            font-family: 'Roboto Flex', sans-serif;
-        }
-        .input-field:focus, .output-field:focus, .select-field:focus { 
-            outline: none; 
-            border-color: var(--app-theme-color);
-        }
+## Getting Started (Local)
 
-        #textInput, #studentIdInput, #prereqInput, #caseInput, #scenarioInput, #careerInput { height: 100px; resize: vertical; margin-bottom: 16px; }
-        #responseOutput { height: 280px; text-align: left; }
-        #knowledgeBase { height: 400px; text-align: left; }
-        #snapshotResult, #prereqResult, #caseResult, #scenarioResult, #careerResult { min-height: 100px; background-color: #e9f5f8; padding: 16px; border-radius: 8px; text-align: left; white-space: pre-wrap;}
+### 1. Clone and Install
 
-        .upload-label {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 10px 24px; background-color: var(--md-sys-color-surface-variant);
-            color: var(--md-sys-color-on-surface-variant); border-radius: 20px;
-            cursor: pointer; transition: background-color 0.3s ease; font-weight: 500;
-        }
-        .upload-label:hover { background-color: #d8dcde; }
+```bash
+git clone https://github.com/nathancamo/AI-Assistant-Work.git
+cd AI-Assistant-Work
+npm install
+```
 
-        #fileName { margin-top: 12px; font-style: italic; color: var(--md-sys-color-on-surface-variant); height: 20px; }
-        
-        .button-group { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+### 2. Add Your Gemini API Key
 
-        .action-button {
-            display: inline-flex; align-items: center; gap: 8px;
-            background-color: var(--app-theme-color); color: var(--app-theme-on-color);
-            border: none; padding: 10px 24px; font-size: 1rem; border-radius: 20px;
-            cursor: pointer; transition: all 0.3s;
-            font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .action-button:hover { 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-            transform: translateY(-2px); 
-        }
-        .action-button:disabled { background-color: #c2c2c2; color: #757575; box-shadow: none; transform: none; cursor: not-allowed; }
-        
-        .copy-button { background-color: var(--app-theme-color); color: var(--app-theme-on-color); margin-top: 10px;}
-        .copy-button:hover { background-color: #8acde6; }
-        
-        #progress {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-top: 16px;
-            color: var(--md-sys-color-on-surface-variant);
-            font-family: monospace;
-            height: 20px;
-        }
-        #analysis-result { font-weight: bold; }
+Create a `.env` file in the project root:
 
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid var(--md-sys-color-primary-container);
-            border-top-color: var(--md-sys-color-primary);
-            border-radius: 50%;
-            animation: spin 1s ease-in-out infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
+```
+GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-        .post-generation-section {
-            display: none; margin-top: 24px; padding-top: 16px;
-            border-top: 1px solid var(--md-sys-color-outline);
-        }
-        #feedbackText { height: 80px; margin-bottom: 10px; }
-        .feedback-button { background-color: #00677f; color: #ffffff; }
+### 3. Run the Backend
 
-        .modal {
-            display: none; position: fixed; z-index: 1001;
-            left: 0; top: 0; width: 100%; height: 100%;
-            overflow: auto; background-color: rgba(0,0,0,0.2);
-            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-            align-items: center; justify-content: center;
-            animation: fadeIn 0.3s;
-        }
-        .modal-content {
-            background-color: var(--md-sys-color-surface);
-            margin: auto; padding: 24px; border-radius: 16px;
-            width: 90%; max-width: 600px; text-align: left;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
-        }
-        .modal-content h3 { margin-top: 0; }
-        .modal-content pre { background-color: var(--md-sys-color-surface-variant); padding: 16px; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word; }
+```bash
+node server.js
+```
 
-        .message-box {
-            position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
-            background-color: #323232; color: white; padding: 14px 24px; border-radius: 8px;
-            box-shadow: 0 4px 8px 3px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.3);
-            opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s, transform 0.3s; z-index: 1000;
-        }
-        .message-box.show { opacity: 1; visibility: visible; }
+Backend runs at [http://localhost:3001](http://localhost:3001)
 
-        /* Assistant Tools Section Styling */
-        .tool-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .tool-card {
-            background-color: rgba(255, 255, 255, 0.7);
-            border: 1px solid var(--md-sys-color-outline);
-            border-radius: 16px;
-            padding: 20px;
-            text-align: left;
-            display: flex;
-            flex-direction: column;
-        }
-        .tool-card h3 {
-            margin-top: 0;
-        }
-        .tool-card p {
-            color: var(--md-sys-color-on-surface-variant);
-            font-size: 0.9rem;
-            margin-top: 0;
-            flex-grow: 1;
-        }
-        .tool-card .action-button {
-            margin-top: auto; /* Pushes button to the bottom */
-        }
-    </style>
-</head>
-<body>
+### 4. Open the Frontend
 
-    <div class="container">
-        <h1><span class="material-symbols-outlined">waving_hand</span> Howdy, Nathan.</h1>
-        
-        <div class="tabs">
-            <button class="tab-button active" onclick="openTab(event, 'generatorTab')">Generator</button>
-            <button class="tab-button" onclick="openTab(event, 'assistantTab')">Assistant Tools</button>
-            <button class="tab-button" onclick="openTab(event, 'knowledgeTab')">Knowledge Base</button>
-            <button class="tab-button" onclick="openTab(event, 'analyticsTab')">Analytics</button>
-        </div>
+Open `index.html` in your browser.
 
-        <!-- Generator Tab -->
-        <div id="generatorTab" class="tab-content active">
-            <div id="dropZone">
-                <p>Paste query text below, or drag & drop a screenshot here.</p>
-                <textarea id="textInput" class="input-field" placeholder="Paste student's query text here..."></textarea>
-                <label for="imageInput" class="upload-label">
-                    <span class="material-symbols-outlined">upload_file</span> Or Click to Upload
-                </label>
-                <input type="file" id="imageInput" accept="image/*">
-                <div id="fileName">No file selected</div>
-            </div>
-            
-            <div class="button-group">
-                 <select id="toneControl" class="select-field" style="width: auto; padding: 10px 16px;">
-                    <option value="auto">Auto-detect Tone</option>
-                    <option value="empathetic">Empathetic</option>
-                    <option value="formal">Formal</option>
-                    <option value="concise">Concise</option>
-                </select>
-                <button id="processButton" class="action-button">
-                    <span class="material-symbols-outlined">auto_awesome</span> Generate Smart Response
-                </button>
-                <button id="detailedButton" class="action-button">
-                    <span class="material-symbols-outlined">travel_explore</span> Generate Detailed Answer
-                </button>
-            </div>
-            <div id="progress"></div>
-            <div id="analysis-result"></div>
+---
 
-            <div class="output-area">
-                <h3>Generated Response</h3>
-                <textarea id="responseOutput" class="output-field" placeholder="Your AI-generated response will appear here..."></textarea>
-                <div class="button-group">
-                    <button id="copyButton" class="action-button copy-button">
-                        <span class="material-symbols-outlined">content_copy</span> Copy
-                    </button>
-                </div>
-            </div>
+## Deploying
 
-            <div id="postGenerationSection" class="post-generation-section">
-                <h3>Next Steps & Feedback</h3>
-                <div class="button-group" id="nextStepsButtons"></div>
-                <textarea id="feedbackText" class="input-field" placeholder="e.g., 'Make it more concise' or 'This was perfect!'"></textarea>
-                <button id="submitFeedbackButton" class="action-button feedback-button">
-                     <span class="material-symbols-outlined">feedback</span> Submit Feedback
-                </button>
-            </div>
-        </div>
-        
-        <!-- Assistant Tools Tab -->
-        <div id="assistantTab" class="tab-content">
-            <div class="tool-grid">
-                <div class="tool-card">
-                    <h3>Student Snapshot</h3>
-                    <p>Enter a course code (e.g., HBNB) to get a proactive summary of potential issues.</p>
-                    <textarea id="studentIdInput" class="input-field" placeholder="Enter course code..."></textarea>
-                    <button id="snapshotButton" class="action-button">Generate Snapshot</button>
-                    <div id="snapshotResult"></div>
-                </div>
-                <div class="tool-card">
-                    <h3>Prerequisite Chain Checker</h3>
-                    <p>Enter a list of completed units (comma-separated, e.g., HBM1001, HNB1001) to see what's next.</p>
-                    <textarea id="prereqInput" class="input-field" placeholder="Enter completed units..."></textarea>
-                    <button id="prereqButton" class="action-button">Check Eligibility</button>
-                    <div id="prereqResult"></div>
-                </div>
-                <div class="tool-card">
-                    <h3>Complex Case Summarizer</h3>
-                    <p>Paste a long email chain or complex query to get a concise summary.</p>
-                    <textarea id="caseInput" class="input-field" placeholder="Paste email thread here..."></textarea>
-                    <button id="caseButton" class="action-button">Summarize Case</button>
-                    <div id="caseResult"></div>
-                </div>
-                <div class="tool-card">
-                    <h3>"What-If" Scenario Planner</h3>
-                    <p>Enter a hypothetical situation to see a recovery plan.</p>
-                    <textarea id="scenarioInput" class="input-field" placeholder="e.g., A student in HBPD fails HFB1112..."></textarea>
-                    <button id="scenarioButton" class="action-button">Plan Scenario</button>
-                    <div id="scenarioResult"></div>
-                </div>
-                 <div class="tool-card">
-                    <h3>Career Pathway Mapper</h3>
-                    <p>Enter a course name to research career options.</p>
-                    <textarea id="careerInput" class="input-field" placeholder="e.g., Bachelor of Biomedical Science"></textarea>
-                    <button id="careerButton" class="action-button">Map Careers</button>
-                    <div id="careerResult"></div>
-                </div>
-            </div>
-        </div>
+- **Backend:** Host on Vercel, Render, Heroku, etc.
+- **Frontend:** Host on GitHub Pages, Netlify, etc.  
+- Update API endpoint as needed.
 
-        <!-- Knowledge Base Tab -->
-        <div id="knowledgeTab" class="tab-content">
-            <h3>Live Knowledge Base</h3>
-            <p>Edit the course information below. Changes are saved automatically and will be used by the AI.</p>
-            <textarea id="knowledgeBase" class="input-field"></textarea>
-        </div>
+---
 
-        <!-- Analytics Tab -->
-        <div id="analyticsTab" class="tab-content">
-            <h3>Query Analytics</h3>
-            <div id="analyticsContent">Analytics will be displayed here.</div>
-            <button id="predictiveButton" class="action-button">Get Predictive Insights</button>
-            <button id="reportButton" class="action-button">Generate Weekly Report</button>
-            <button id="feedbackInsightsButton" class="action-button">View Feedback Insights</button>
-        </div>
-    </div>
-    
-    <!-- Modal -->
-    <div id="appModal" class="modal">
-        <div class="modal-content">
-            <h3 id="modalTitle">Modal</h3>
-            <div id="modalContent"></div>
-            <button class="action-button" onclick="document.getElementById('appModal').style.display='none'">Close</button>
-        </div>
-    </div>
+## License
 
-    <div id="messageBox" class="message-box"></div>
+MIT License
 
-    <script>
-        // DOM element references
-        const textInput = document.getElementById('textInput');
-        const imageInput = document.getElementById('imageInput');
-        const processButton = document.getElementById('processButton');
-        const detailedButton = document.getElementById('detailedButton');
-        const responseOutput = document.getElementById('responseOutput');
-        const progressDiv = document.getElementById('progress');
-        const analysisResultDiv = document.getElementById('analysis-result');
-        const fileNameDiv = document.getElementById('fileName');
-        const copyButton = document.getElementById('copyButton');
-        const messageBox = document.getElementById('messageBox');
-        const dropZone = document.getElementById('dropZone');
-        const postGenerationSection = document.getElementById('postGenerationSection');
-        const feedbackText = document.getElementById('feedbackText');
-        const submitFeedbackButton = document.getElementById('submitFeedbackButton');
-        const knowledgeBase = document.getElementById('knowledgeBase');
-        const analyticsContent = document.getElementById('analyticsContent');
-        const feedbackInsightsButton = document.getElementById('feedbackInsightsButton');
-        const appModal = document.getElementById('appModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalContent = document.getElementById('modalContent');
-        const nextStepsButtons = document.getElementById('nextStepsButtons');
-        const toneControl = document.getElementById('toneControl');
-        const studentIdInput = document.getElementById('studentIdInput');
-        const snapshotButton = document.getElementById('snapshotButton');
-        const snapshotResult = document.getElementById('snapshotResult');
-        const prereqInput = document.getElementById('prereqInput');
-        const prereqButton = document.getElementById('prereqButton');
-        const prereqResult = document.getElementById('prereqResult');
-        const caseInput = document.getElementById('caseInput');
-        const caseButton = document.getElementById('caseButton');
-        const caseResult = document.getElementById('caseResult');
-        const reportButton = document.getElementById('reportButton');
-        const scenarioIn
+---
